@@ -73,6 +73,7 @@ check_if_terminated() {
 
 jattach() {
     set +e
+    set -x
     "$JATTACH" "$PID" load "$PROFILER" true "$1,log=$LOG" > /dev/null
     RET=$?
 

@@ -36,6 +36,7 @@ enum ASGCT_CallFrameType {
     BCI_THREAD_ID           = -15,  // method_id designates a thread
     BCI_ERROR               = -16,  // method_id is an error string
     BCI_INSTRUMENT          = -17,  // synthetic method_id that should not appear in the call stack
+    BCI_LOCK_HASH           = -18,  // lock object hashcode
 };
 
 // See hotspot/src/share/vm/prims/forte.cpp

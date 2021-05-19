@@ -975,6 +975,7 @@ class Recording {
         buf->putVar32(event->_class_id);
         buf->putVar64(event->_timeout);
         buf->putVar64(event->_address);
+        buf->putVar32(event->_jhash);
         buf->put8(start, buf->offset() - start);
     }
 

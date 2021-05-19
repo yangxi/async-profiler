@@ -606,6 +606,8 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, Event*
     // }
 
     if (_add_thread_frame) {
+        if (event_type == BCI_LOCK)
+            num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, ((LockEvent *)event)->_jhash);
         num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, tid);
     }
 
@@ -1089,7 +1091,7 @@ void Profiler::dump(std::ostream& out, Arguments& args) {
 
 /*
  * Dump stacks in FlameGraph input format:
- * 
+ *
  * <frame>;<frame>;...;<topmost frame> <count>
  */
 void Profiler::dumpCollapsed(std::ostream& out, Arguments& args) {

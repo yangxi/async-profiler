@@ -36,6 +36,8 @@ class LockTracer : public Engine {
     static bool isConcurrentLock(const char* lock_name);
     static void recordContendedLock(int event_type, u64 start_time, u64 end_time,
                                     const char* lock_name, jobject lock, jlong timeout);
+    static void recordPerThreadContendedLock(jvmtiEnv *jvmti, int event_type, u64 start_time, u64 end_time,
+                                    const char* lock_name, jobject lock, jlong timeout);
     static void bindUnsafePark(UnsafeParkFunc entry);
 
   public:

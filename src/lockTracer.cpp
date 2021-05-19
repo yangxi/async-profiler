@@ -19,6 +19,9 @@
 #include "os.h"
 #include "profiler.h"
 #include "vmStructs.h"
+#include <jvmti.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 
 jlong LockTracer::_threshold;
@@ -74,7 +77,8 @@ void JNICALL LockTracer::MonitorContendedEntered(jvmtiEnv* jvmti, JNIEnv* env, j
     // Time is meaningless if lock attempt has started before profiling
     if (_enabled && entered_time - enter_time >= _threshold && enter_time >= _start_time) {
         char* lock_name = getLockName(jvmti, env, object);
-        recordContendedLock(BCI_LOCK, enter_time, entered_time, lock_name, object, 0);
+        //recordContendedLock(BCI_LOCK, enter_time, entered_time, lock_name, object, 0);
+        recordPerThreadContendedLock(jvmti, BCI_LOCK, enter_time, entered_time, lock_name, object, 0);
         jvmti->Deallocate((unsigned char*)lock_name);
     }
 }
@@ -125,6 +129,27 @@ bool LockTracer::isConcurrentLock(const char* lock_name) {
     return strncmp(lock_name, "Ljava/util/concurrent/locks/ReentrantLock", 41) == 0 ||
            strncmp(lock_name, "Ljava/util/concurrent/locks/ReentrantReadWriteLock", 50) == 0 ||
            strncmp(lock_name, "Ljava/util/concurrent/Semaphore", 31) == 0;
+}
+
+void LockTracer::recordPerThreadContendedLock(jvmtiEnv * jvmti, int event_type, u64 start_time, u64 end_time,
+                                     const char* lock_name, jobject lock, jlong timeout) {
+    LockEvent event;
+    event._class_id = 0;
+    event._start_time = start_time;
+    event._end_time = end_time;
+    event._address = *(uintptr_t*)lock;
+    event._timeout = timeout;
+    jint hashcode;
+    jvmti->GetObjectHashCode(lock, &event._jhash);
+    if (lock_name != NULL) {
+        if (lock_name[0] == 'L') {
+            event._class_id = Profiler::_instance.classMap()->lookup(lock_name + 1, strlen(lock_name) - 2);
+        } else {
+            event._class_id = Profiler::_instance.classMap()->lookup(lock_name);
+        }
+    }
+
+    Profiler::_instance.recordSample(NULL, end_time - start_time, event_type, &event);
 }
 
 void LockTracer::recordContendedLock(int event_type, u64 start_time, u64 end_time,
