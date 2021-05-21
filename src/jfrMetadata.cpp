@@ -115,6 +115,7 @@ JfrMetadata::JfrMetadata() : Element("root") {
                 << field("stackTrace", T_STACK_TRACE, "Stack Trace", F_CPOOL)
                 << field("monitorClass", T_CLASS, "Monitor Class", F_CPOOL)
                 << field("jhash", T_INT, "Java Objecthash", F_UNSIGNED)
+                << field("tid", T_INT, "Native TID", F_UNSIGNED)
                 << field("address", T_LONG, "Monitor Address", F_ADDRESS))
 
             << (type("jdk.ThreadPark", T_THREAD_PARK, "Java Thread Park")

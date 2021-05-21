@@ -963,6 +963,7 @@ class Recording {
         buf->putVar32(call_trace_id);
         buf->putVar32(event->_class_id);
         buf->putVar32(event->_jhash);
+        buf->putVar32(tid);
         buf->putVar64(event->_address);
 //        buf->putVar64((uintptr_t)(event->_enter_stamp));
         buf->put8(start, buf->offset() - start);
