@@ -605,9 +605,9 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, Event*
     //     frames[first_java_frame].bci = 0;
     // }
 
+    if (event_type == BCI_LOCK)
+        num_frames += makeEventFrame(frames + num_frames, BCI_LOCK_HASH, ((LockEvent *)event)->_jhash);
     if (_add_thread_frame) {
-        if (event_type == BCI_LOCK)
-            num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, ((LockEvent *)event)->_jhash);
         num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, tid);
     }
 
@@ -615,6 +615,7 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, Event*
     _jfr.recordEvent(lock_index, tid, call_trace_id, event_type, event, counter);
 
     _locks[lock_index].unlock();
+    // find /tmp/tailor-pid.signal
 }
 
 jboolean JNICALL Profiler::NativeLibraryLoadTrap(JNIEnv* env, jobject self, jstring name, jboolean builtin) {

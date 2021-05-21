@@ -239,6 +239,12 @@ const char* FrameName::name(ASGCT_CallFrame& frame, bool for_matching) {
             return _buf;
         }
 
+        case BCI_LOCK_HASH: {
+            int hashid = (int)(uintptr_t)frame.method_id;
+            snprintf(_buf, sizeof(_buf) -1, "[jhash=%d]", hashid);
+            return _buf;
+        }
+
         case BCI_ERROR: {
             snprintf(_buf, sizeof(_buf) - 1, "[%s]", (const char*)frame.method_id);
             return _buf;
