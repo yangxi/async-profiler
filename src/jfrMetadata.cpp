@@ -110,9 +110,11 @@ JfrMetadata::JfrMetadata() : Element("root") {
                 << category("Java Application")
                 << field("startTime", T_LONG, "Start Time", F_TIME_TICKS)
                 << field("duration", T_LONG, "Duration", F_DURATION_TICKS)
+                << field("enterstamp", T_LONG, "Enter Timestamp", F_UNSIGNED)
                 << field("eventThread", T_THREAD, "Event Thread", F_CPOOL)
                 << field("stackTrace", T_STACK_TRACE, "Stack Trace", F_CPOOL)
                 << field("monitorClass", T_CLASS, "Monitor Class", F_CPOOL)
+                << field("jhash", T_INT, "Java Objecthash", F_UNSIGNED)
                 << field("address", T_LONG, "Monitor Address", F_ADDRESS))
 
             << (type("jdk.ThreadPark", T_THREAD_PARK, "Java Thread Park")

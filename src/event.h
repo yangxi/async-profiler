@@ -48,6 +48,7 @@ class LockEvent : public Event {
     u32 _class_id;
     u64 _start_time;
     u64 _end_time;
+    u64 _enter_stamp;
     uintptr_t _address;
     int _jhash;
     long long _timeout;

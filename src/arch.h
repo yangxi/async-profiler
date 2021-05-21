@@ -31,6 +31,12 @@ static inline int atomicInc(volatile int& var, int increment = 1) {
     return __sync_fetch_and_add(&var, increment);
 }
 
+static unsigned long __inline__ rdtsc(void)
+{
+  unsigned int tickl, tickh;
+  __asm__ __volatile__("rdtsc":"=a"(tickl),"=d"(tickh)::"%ecx");
+  return ((unsigned long)tickh << 32)|tickl;
+}
 
 #if defined(__x86_64__) || defined(__i386__)
 

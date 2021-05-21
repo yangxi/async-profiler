@@ -137,6 +137,7 @@ void LockTracer::recordPerThreadContendedLock(jvmtiEnv * jvmti, int event_type, 
     event._class_id = 0;
     event._start_time = start_time;
     event._end_time = end_time;
+    event._enter_stamp = rdtsc();
     event._address = *(uintptr_t*)lock;
     event._timeout = timeout;
     jint hashcode;

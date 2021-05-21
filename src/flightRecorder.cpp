@@ -958,10 +958,13 @@ class Recording {
         buf->put8(T_MONITOR_ENTER);
         buf->putVar64(event->_start_time);
         buf->putVar64(event->_end_time - event->_start_time);
+        buf->putVar64(event->_enter_stamp);
         buf->putVar32(tid);
         buf->putVar32(call_trace_id);
         buf->putVar32(event->_class_id);
+        buf->putVar32(event->_jhash);
         buf->putVar64(event->_address);
+//        buf->putVar64((uintptr_t)(event->_enter_stamp));
         buf->put8(start, buf->offset() - start);
     }
 
@@ -975,7 +978,7 @@ class Recording {
         buf->putVar32(event->_class_id);
         buf->putVar64(event->_timeout);
         buf->putVar64(event->_address);
-        buf->putVar32(event->_jhash);
+        //buf->putVar32(event->_jhash);
         buf->put8(start, buf->offset() - start);
     }
 
