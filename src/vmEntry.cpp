@@ -26,6 +26,7 @@
 #include "lockTracer.h"
 #include "log.h"
 #include "vmStructs.h"
+#include "tailor.h"
 
 
 // JVM TI agent return codes
@@ -273,6 +274,11 @@ Agent_OnLoad(JavaVM* vm, char* options, void* reserved) {
     }
 
     return 0;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Agent_OnUnload(JavaVM* vm) {
+    delete_tailor_signal_files();
 }
 
 extern "C" JNIEXPORT jint JNICALL

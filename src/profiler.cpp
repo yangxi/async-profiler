@@ -38,6 +38,7 @@
 #include "stackFrame.h"
 #include "symbols.h"
 #include "vmStructs.h"
+#include "tailor.h"
 
 
 Profiler Profiler::_instance;
@@ -600,16 +601,15 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, Event*
         num_frames--;
     }
 
-    // TODO: Zero out top bci to reduce the number of stack traces
-    // if (first_java_frame < num_frames && frames[first_java_frame].bci > 0) {
-    //     frames[first_java_frame].bci = 0;
-    // }
-
     if (_add_thread_frame) {
+        // NOTE: Moving the below block out triggers exception in JFR output mode because JFR doesn't support makeEventFrame
         if (event_type == BCI_LOCK)
            num_frames += makeEventFrame(frames + num_frames, BCI_LOCK_HASH, ((LockEvent *)event)->_jhash);
         num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, tid);
     }
+
+    if (event_type == BCI_LOCK)
+        gen_tailor_jvmti_monitor_signal((LockEvent *)event);
 
     u32 call_trace_id = _call_trace_storage.put(num_frames, frames, counter);
     _jfr.recordEvent(lock_index, tid, call_trace_id, event_type, event, counter);
@@ -1355,6 +1355,6 @@ void Profiler::shutdown(Arguments& args) {
             Log::error(error.message());
         }
     }
-
     _state = TERMINATED;
+    delete_tailor_signal_files();
 }
