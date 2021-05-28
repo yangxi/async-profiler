@@ -602,14 +602,15 @@ void Profiler::recordSample(void* ucontext, u64 counter, jint event_type, Event*
     }
 
     if (_add_thread_frame) {
-        // NOTE: Moving the below block out triggers exception in JFR output mode because JFR doesn't support makeEventFrame
-        if (event_type == BCI_LOCK)
-           num_frames += makeEventFrame(frames + num_frames, BCI_LOCK_HASH, ((LockEvent *)event)->_jhash);
         num_frames += makeEventFrame(frames + num_frames, BCI_THREAD_ID, tid);
     }
 
-    if (event_type == BCI_LOCK)
+    if (event_type == BCI_LOCK) {
         gen_tailor_jvmti_monitor_signal((LockEvent *)event);
+        if (_add_jhash_frame) {
+            num_frames += makeEventFrame(frames + num_frames, BCI_LOCK_HASH, ((LockEvent *)event)->_jhash);
+        }
+    }
 
     u32 call_trace_id = _call_trace_storage.put(num_frames, frames, counter);
     _jfr.recordEvent(lock_index, tid, call_trace_id, event_type, event, counter);
@@ -958,6 +959,7 @@ Error Profiler::start(Arguments& args, bool reset) {
     }
 
     _add_thread_frame = args._threads && args._output != OUTPUT_JFR;
+    _add_jhash_frame = args._output != OUTPUT_JFR;
     _update_thread_names = args._threads || args._output == OUTPUT_JFR;
     _thread_filter.init(args._filter);
 
@@ -1356,5 +1358,4 @@ void Profiler::shutdown(Arguments& args) {
         }
     }
     _state = TERMINATED;
-    delete_tailor_signal_files();
 }

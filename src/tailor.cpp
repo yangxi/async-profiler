@@ -74,7 +74,6 @@ u8* init_tailor_channel_page() {
     tailor_channel_page = (u8 *) signal_buf;
     my_pid = pid;
     my_tid = tid;
-    fprintf(stderr, "Setup tailor signal page for task %d at %p\n", tid, tailor_channel_page);
     return tailor_channel_page;
 }
 
