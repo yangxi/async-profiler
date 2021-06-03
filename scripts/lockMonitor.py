@@ -12,7 +12,7 @@ from lockstatParser import parseLockStat
 verbose = False
 jpid = None
 def getJavaPid():
-    get_jpid = run(['pidof', 'java'], stdout=PIPE, text=True)
+    get_jpid = run(['pidof', 'java'], stdout=PIPE, encoding='utf-8')
     if get_jpid.returncode != 0:
         return []
     pids = get_jpid.stdout.strip().split()
@@ -29,6 +29,13 @@ def getProfileOutput(profile, id):
         return {'Error': profile['Error']}
     ret = {}
     try:
+        key = "%s.lockstat.totalcpu" % (id)
+        # the unit is in ms
+        ret[key] = profile['CPUUsage']['Total'] / 1000.0
+        key = "%s.lockstat.totalusercpu" % (id)
+        ret[key] = profile['CPUUsage']['User'] / 1000.0
+        key = "%s.lockstat.totalsystemcpu" % (id)
+        ret[key] = profile['CPUUsage']['System'] / 1000.0
         key = "%s.lockstat.lockduration" % (id)
         ret[key] = profile['TotalDuration'] / (1000 * 1000 * 1000.0)
         hottesttype = profile['Summary'][0]
@@ -58,14 +65,33 @@ def sighandler(signal, frame):
             print("Signal handler failed to stop the profiler", file=sys.stderr)
     sys.exit(2)
 
+def read_stat_line(stat_file):
+    with open(stat_file, 'r') as f:
+        return f.readline()
+def get_uk_time(stat_line):
+    stats = stat_line.strip().split(' ')
+    utime = int(stats[13]) * 10
+    ktime = int(stats[14]) * 10
+    ret = [utime + ktime, utime, ktime]
+    return ret
+def read_pid_time(pid):
+    proc_file = "/proc/%s/stat" % (pid)
+    return get_uk_time(read_stat_line(proc_file))
+
 def profileJVM(pid, interval):
     global verbose
-    p = run(['./profiler.sh', '-d', interval, '-e', 'lock', pid], stdout=PIPE, text=True)
+    before_uk = read_pid_time(pid)
+    p = run(['./profiler.sh', '-d', interval, '-e', 'lock', pid], stdout=PIPE, encoding='utf-8')
     if p.returncode != 0:
         return {'Error': 'Async-profiler failed'}
     if verbose:
         print("Profile output: %s" % (p.stdout))
-    return parseLockStat(p.stdout)
+    after_uk = read_pid_time(pid)
+    lockstat = parseLockStat(p.stdout)
+    lockstat['CPUUsage'] = {'Total': after_uk[0] - before_uk[0],
+        'User': after_uk[1] - before_uk[1],
+        'System':after_uk[2] - before_uk[2]}
+    return lockstat
 
 def usage():
     print("""usage: lockMonitor.py [-p jvmpid] [-i tag] [-d duration] [-g GRAPHITEIP:PORT] [-h] [-v])""")
@@ -134,6 +160,9 @@ def main(argv):
             jpid = pids[0]
         startTime = int(time.time())
         profile = profileJVM(jpid, interval)
+        if 'Error' in profile:
+            print("Error in profiling:%s" % profile['Error'])
+            exit(1)
         if output == "json":
             print(json.dumps(profile, indent=4))
         elif output == "text":
@@ -154,6 +183,8 @@ def main(argv):
             for k in outo.keys():
                 if not isinstance(outo[k], str):
                     graphyte.send(k, outo[k], timestamp=startTime)
+                    if verbose:
+                        print("Send %s : %s at timestamp %d to graphyte" % (k, outo[k], startTime))
         else:
             print("Unknow output format:%s" % output)
         # try to search

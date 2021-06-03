@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 """
 Parse the Async lock tracing output.
@@ -48,12 +49,17 @@ Return
 """
 def parseLockStat(lockstat):
     t = lockstat.split('\n\n')
-    if len(t) < 3:
-        return {'Error':'Failed to parse the lockstat'}
+    if len(t) < 2:
+        print("Failed to parse lockstat %s" % lockstat, file=sys.stderr)
+        return {'Error': 'Failed to parse the lockstat'}
     ret = parseHead(t[0])
     if 'Error' in ret:
         return ret
     # locks
+    if ret['Samples'] == 0:
+        ret['Locks'] = []
+        ret['Summary'] = []
+        return ret
     locks = []
     for ls in t[1:-1]:
         locks.append(parseLock(ls))
